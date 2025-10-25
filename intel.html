@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Typing Test for noobs</title>
+<style>
+body { font-family: 'Segoe UI', Arial, sans-serif; background:#0f172a; color:#f8fafc;
+display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; margin:0; }
+h1 { color:#6366f1; font-size:2.4rem; margin-bottom:20px; }
+#container { background:#1e293b; padding:30px 40px; border-radius:15px; box-shadow:0 8px 25px rgba(0,0,0,0.5);
+width:90%; max-width:850px; text-align:center; }
+#textDisplay { font-size:1.6rem; line-height:2.2rem; user-select:none; margin:25px 0; }
+.char.correct { color:#22c55e; }
+.char.incorrect { color:#ef4444; background: rgba(239,68,68,0.15); border-radius:4px; }
+.char.current { border-bottom:3px solid #6366f1; }
+#inputArea { opacity:0; position:absolute; pointer-events:none; }
+button, select { background:#6366f1; color:white; border:none; border-radius:8px; padding:10px 15px; margin:5px; font-weight:600; cursor:pointer; }
+select { background:#334155; color:#f8fafc; }
+#popup { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#1e293b; color:#f8fafc; padding:30px; border-radius:15px; text-align:center; box-shadow:0 10px 40px rgba(0,0,0,0.6); display:none; }
+#popup h2 { color:#6366f1; margin-bottom:15px; }
+</style>
+</head>
+<body>
+<h1>Typing Test for Beginners</h1>
+<div id="container">
+<select id="lengthSelect">
+  <option value="short">Short Sentence</option>
+  <option value="medium" selected>Medium Sentence</option>
+  <option value="long">Long Sentence</option>
+</select>
+<button id="startBtn">Start Test</button>
+<div id="textDisplay"></div>
+<input id="inputArea" type="text" autofocus>
+</div>
+
+<div id="popup">
+<h2>Results</h2>
+<p>WPM: <span id="wpm"></span></p>
+<p>Accuracy: <span id="accuracy"></span>%</p>
+<p>Errors: <span id="errors"></span></p>
+<p id="rating"></p>
+<button onclick="closePopup()">Close</button>
+</div>
+
+<script>
+// ~100 sentences across short, medium, long
+const sentences = {
+  short:[
+    "Typing fast is fun.","I love coding.","Practice makes perfect.","Hello world!","Good morning.","Stay calm.","Keep going.",
+    "Never quit.","Read books.","Drink water.","Smile often.","Time is precious.","Be kind.","Think smart.","Run fast.","Jump high.",
+    "Play games.","Eat healthy.","Write code.","Learn daily.","Ask questions.","Take notes.","Sit straight.","Sing loud.","Dance now.",
+    "Stay happy.","Work hard.","Rest well.","Plan ahead.","Dream big.","Stay curious.","Stay safe.","Help others.","Love life.","Be brave.",
+    "Stay focused.","Think positive.","Try again.","Be patient.","Stay strong.","Keep learning.","Enjoy life.","Read daily.","Laugh more.",
+    "Move fast.","Be honest.","Be gentle.","Play fair.","Speak truth.","Stay humble.","Be polite."
+  ],
+  medium:[
+    "The morning breeze carried the scent of rain and fresh grass.",
+    "Creativity flows best when the mind is calm and focused.",
+    "Every challenge is a chance to grow stronger and wiser.",
+    "Technology shapes the way we think, learn, and connect.",
+    "A healthy mind and body are the keys to happiness and success.",
+    "The sun sets slowly behind the mountains, painting the sky with colors.",
+    "Reading books daily improves your knowledge and imagination.",
+    "Taking breaks while working can boost your productivity significantly.",
+    "Collaboration with others often leads to better solutions and ideas.",
+    "Learning new skills opens doors to countless opportunities in life.",
+    "Listening carefully can prevent misunderstandings and mistakes.",
+    "Proper planning helps achieve goals faster and more efficiently.",
+    "Exercise regularly to maintain strength, stamina, and energy.",
+    "Writing down your thoughts can help clarify your mind and ideas.",
+    "Setting small achievable goals leads to long-term success.",
+    "Traveling broadens your perspective and understanding of cultures.",
+    "Being kind to others often creates a positive environment.",
+    "Meditation helps in reducing stress and increasing focus.",
+    "Time management is crucial for balancing work and personal life.",
+    "Healthy eating habits contribute to long-lasting well-being.",
+    "Patience and persistence often overcome the toughest challenges.",
+    "Sharing knowledge with others strengthens your own understanding.",
+    "Adapting to change quickly can make life smoother and easier.",
+    "Practicing gratitude improves overall mental and emotional health.",
+    "Critical thinking helps make better decisions and solve problems.",
+    "Focus on solutions rather than problems to achieve better results.",
+    "Being consistent is more important than being perfect every day.",
+    "Ask for help when needed to speed up learning and growth.",
+    "Small daily improvements lead to massive long-term results.",
+    "Effective communication can resolve conflicts before they escalate.",
+    "Learning from mistakes is key to personal and professional growth.",
+    "Balancing work and rest improves overall productivity.",
+    "Observe closely before making important decisions in life.",
+    "Positive habits repeated consistently yield great outcomes.",
+    "Challenge yourself regularly to avoid stagnation.",
+    "Take time to reflect on your actions and choices.",
+    "Plan ahead but remain flexible to adapt to changes.",
+    "Celebrate small victories to stay motivated.",
+    "Embrace failure as a learning opportunity.",
+    "Avoid multitasking to increase efficiency and focus.",
+    "Stay curious and keep exploring new ideas.",
+    "Read widely to broaden your knowledge and imagination.",
+    "Practice empathy to understand others better.",
+    "Avoid procrastination by breaking tasks into smaller steps.",
+    "Seek feedback to improve and grow continuously.",
+    "Focus on progress, not perfection.",
+    "Time spent learning is never wasted.",
+    "Take care of mental and physical health equally."
+  ],
+  long:[
+    "Technology shapes the way we think, learn, and connect in a world that is constantly evolving.",
+    "The quick brown fox jumps over the lazy dog while the rain pours down and the wind blows fiercely.",
+    "Writing code requires focus, patience, and an understanding of the logic behind every function and variable.",
+    "When we communicate clearly, misunderstandings decrease and productivity improves dramatically over time.",
+    "Traveling the world exposes you to diverse cultures, foods, and perspectives that change the way you think.",
+    "Practicing mindfulness every day can reduce stress, improve focus, and make life feel more meaningful.",
+    "Continuous learning and curiosity are what separate great thinkers from those who stop growing.",
+    "Developing strong habits early in life often leads to long-term success and personal fulfillment.",
+    "Exercise, a balanced diet, and sufficient sleep are crucial components for maintaining a healthy lifestyle.",
+    "Setting clear goals, tracking progress, and adjusting strategies frequently ensures you achieve what you want.",
+    "Collaborating with a diverse team brings in multiple perspectives that often lead to innovative solutions.",
+    "Being empathetic and understanding helps build stronger relationships both personally and professionally.",
+    "Reading fiction and non-fiction regularly can expand your imagination and deepen your understanding of the world.",
+    "Writing regularly helps organize thoughts, clarify ideas, and communicate effectively with others.",
+    "Spending time in nature has been shown to improve mood, reduce stress, and increase creativity.",
+    "Listening actively to others can prevent conflicts and create a more supportive environment for everyone.",
+    "Learning a musical instrument or a new language challenges the brain and improves cognitive function.",
+    "Adapting quickly to new technologies and changes ensures you stay relevant and competitive in any field.",
+    "Volunteering and helping others provides perspective, satisfaction, and a sense of community connection.",
+    "Maintaining a balance between work, rest, and recreation is essential for long-term happiness and productivity.",
+    "Problem-solving requires patience, creativity, and often collaboration with others to find the best solution.",
+    "Traveling, reading, and exploring new ideas expand the mind and encourage innovative thinking.",
+    "Regular reflection on personal goals and achievements helps maintain motivation and clarity.",
+    "Practicing resilience and learning from failures is what makes people successful over time.",
+    "Good communication skills, empathy, and honesty build trust and strong relationships in all areas of life.",
+    "Deep work and focused practice are what separate amateurs from experts in any field."
+  ]
+};
+
+const textDisplay=document.getElementById('textDisplay');
+const inputArea=document.getElementById('inputArea');
+const popup=document.getElementById('popup');
+const wpmEl=document.getElementById('wpm');
+const accEl=document.getElementById('accuracy');
+const errEl=document.getElementById('errors');
+const ratingEl=document.getElementById('rating');
+const startBtn=document.getElementById('startBtn');
+const lengthSelect=document.getElementById('lengthSelect');
+
+let sentence="", startTime, typed=0, correct=0, errors=0, currentIndex=0, started=false;
+
+function getRating(wpm){
+  if(wpm<20) return "slowpoke";
+  else if(wpm<40) return "Ur typing is as fast as a normal human being";
+  else if(wpm<60) return "ur pretty good :D";
+  else return "how does one type so fast";
+}
+
+function startTest(){
+  resetTest();
+  const len=lengthSelect.value;
+  const arr=sentences[len];
+  sentence=arr[Math.floor(Math.random()*arr.length)];
+  textDisplay.innerHTML="";
+  for(let c of sentence){
+    const span=document.createElement("span");
+    span.classList.add("char");
+    span.textContent=c;
+    textDisplay.appendChild(span);
+  }
+  textDisplay.firstChild.classList.add("current");
+  inputArea.focus();
+  started=true;
+  startTime=Date.now();
+}
+
+function resetTest(){
+  textDisplay.innerHTML="";
+  typed=correct=errors=currentIndex=0;
+  started=false;
+  inputArea.value="";
+  popup.style.display="none";
+}
+
+function calculateWPM(){
+  const elapsed=(Date.now()-startTime)/1000/60;
+  const spans=textDisplay.querySelectorAll(".char");
+  let correctChars=0;
+  spans.forEach(span=>{ if(span.classList.contains("correct")) correctChars++; });
+  const words=sentence.split(/\s+/);
+  const avgWordLength=words.reduce((a,b)=>a+b.length,0)/words.length || 5;
+  const wpm=Math.round((correctChars/avgWordLength)/elapsed);
+  const accuracy=Math.round((correct/Math.max(1,typed))*100);
+  return {wpm, accuracy};
+}
+
+function endTest(){
+  const results=calculateWPM();
+  wpmEl.textContent=results.wpm;
+  accEl.textContent=results.accuracy;
+  errEl.textContent=errors;
+  ratingEl.textContent=getRating(results.wpm);
+  popup.style.display="block";
+}
+
+function closePopup(){ popup.style.display="none"; }
+
+inputArea.addEventListener("keydown", e=>{
+  if(!started) return;
+  const spans=textDisplay.querySelectorAll(".char");
+  if(e.key.length===1){
+    const span=spans[currentIndex];
+    if(!span) return;
+    if(e.key===span.textContent){ span.classList.add("correct"); correct++; }
+    else{ span.classList.add("incorrect"); errors++; }
+    span.classList.remove("current");
+    currentIndex++;
+    if(spans[currentIndex]) spans[currentIndex].classList.add("current");
+    else endTest();
+    typed++;
+  } else if(e.key==="Backspace"){
+    e.preventDefault();
+    if(currentIndex>0){
+      const span=spans[currentIndex];
+      if(span) span.classList.remove("current");
+      currentIndex--;
+      const prev=spans[currentIndex];
+      if(prev){
+        if(prev.classList.contains("correct")) correct--;
+        if(prev.classList.contains("incorrect")) errors--;
+        prev.classList.remove("correct","incorrect");
+        prev.classList.add("current");
+      }
+      typed=Math.max(0,typed-1);
+    }
+  }
+});
+
+startBtn.addEventListener("click", startTest);
+textDisplay.addEventListener("click", ()=>inputArea.focus());
+</script>
+</body>
+</html>
